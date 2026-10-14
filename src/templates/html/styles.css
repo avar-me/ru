@@ -127,16 +127,11 @@ a:hover {
   font-size: 1rem;
 }
 
-.topbar-langs,
 .topbar-apps {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.topbar-apps {
   gap: 1.15rem;
 }
 
@@ -148,22 +143,6 @@ a:hover {
 
 .topbar a:hover {
   color: var(--accent);
-}
-
-.topbar-sep {
-  color: var(--text-light);
-}
-
-.topbar-langs a.is-current {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.topbar-old {
-  margin-left: 0.85rem;
-  font-family: var(--font-serif);
-  font-style: italic;
-  letter-spacing: 0.02em;
 }
 
 .topbar-icon {
@@ -184,27 +163,6 @@ a:hover {
   display: block;
   width: 26px;
   height: 26px;
-}
-
-.stage-badge {
-  margin-left: 0.85rem;
-  padding: 0.12rem 0.5rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.stage-badge--stage {
-  color: #3f7a4d;
-  background: rgba(63, 122, 77, 0.12);
-}
-
-.stage-badge--experimental {
-  color: #a3690f;
-  background: rgba(163, 105, 15, 0.12);
 }
 
 /* ============================================================================
