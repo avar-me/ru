@@ -124,22 +124,44 @@ function filterDisplayLabels(labels) {
 
 const GENDER_FORM_HINTS = SITE.ui.genderHints;
 
-const VOWEL_RE = /[аеёиоуыэюяӀӏ]/iu;
+const VOWEL_RE = /[аеёиоуыэюя]/iu;
+
+// Аварские диграфы (см. CLAUDE.md) считаются одной буквой при нумерации
+// ударения — согласовано с тем, как номер буквы проставляют составители
+// словаря (т.е. "кӏ" — буква №1, следующая буква — №2, и т.д.).
+const DIGRAPHS = ['тӏ', 'лъ', 'гь', 'гъ', 'гӏ', 'кь', 'къ', 'кӏ', 'хь', 'хъ', 'хӏ', 'цӏ', 'чӏ'];
+const DIGRAPH_SET = new Set(DIGRAPHS);
+
+/** Разбить слово на буквы: диграф — одна буква, иначе один символ. */
+function letterGraphemes(word) {
+    const chars = [...word];
+    const graphemes = [];
+    let i = 0;
+    while (i < chars.length) {
+        const pair = i + 1 < chars.length ? (chars[i] + chars[i + 1]).toLowerCase() : '';
+        if (pair && DIGRAPH_SET.has(pair)) {
+            graphemes.push({ text: chars[i] + chars[i + 1], offset: i });
+            i += 2;
+        } else {
+            graphemes.push({ text: chars[i], offset: i });
+            i += 1;
+        }
+    }
+    return graphemes;
+}
 
 /**
- * Индекс ударной гласной: stress — позиция в слове (1-based) или номер гласной.
+ * Индекс ударной гласной: stress — номер буквы (1-based), где диграф
+ * (тӏ, лъ, гь, …) считается одной буквой.
  */
 function stressVowelIndex(word, stress) {
     if (!word || !stress || stress < 1) return -1;
-    const chars = [...word];
-    const pos = stress - 1;
-    if (pos < chars.length && VOWEL_RE.test(chars[pos])) return pos;
-
-    const vowelIdxs = [];
-    for (let i = 0; i < chars.length; i++) {
-        if (VOWEL_RE.test(chars[i])) vowelIdxs.push(i);
+    const graphemes = letterGraphemes(word);
+    const g = graphemes[stress - 1];
+    if (!g) return -1;
+    for (let i = 0; i < g.text.length; i++) {
+        if (VOWEL_RE.test(g.text[i])) return g.offset + i;
     }
-    if (stress >= 1 && stress <= vowelIdxs.length) return vowelIdxs[stress - 1];
     return -1;
 }
 
@@ -353,6 +375,12 @@ function findExactWordInIndex(words, query) {
  */
 function normalizeWord(word) {
     let normalized = word.toLowerCase().trim();
+    // Снять знак ударения (U+0301, combining acute accent) — слова со
+    // вставленным ударением («щи́нкӏизабизе») должны находиться по обычному
+    // написанию («щинкӏизабизе»). NFD раскладывает составные буквы перед
+    // снятием акцента и NFC возвращает обратно; U+0301 отличен от U+0306
+    // (краткая, как в «й»), поэтому йотированные буквы не затрагиваются.
+    normalized = normalized.normalize('NFD').replace(/́/g, '').normalize('NFC');
     // Replace all variants of stick (1, I, i, l, L, |, !, Ӏ) with ӏ (U+04CF)
     // Include both U+04C0 (Ӏ) and U+04CF (ӏ) for compatibility
     // Added: ! (exclamation), ǀ (latin letter dental click), various other pipe-like chars
